@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Spinu Andrei IA2201 - Grafica pe Calculator Laboratorul II</title>
+
+  <!-- Styles -->
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #1a1a2e;
+      color: white;
+    }
+
+    #particles-js {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    .content {
+      position: relative;
+      z-index: 2;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .chartdiv {
+      width: 100%;
+      height: 500px;
+      margin-bottom: 50px;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    h2 {
+      color: #4fd1c5;
+      text-align: center;
+      margin: 40px 0 20px;
+      font-size: 2em;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .header {
+      text-align: center;
+      padding: 40px 0;
+      margin-bottom: 40px;
+      background: linear-gradient(135deg, rgba(79, 209, 197, 0.1), rgba(79, 209, 197, 0.2));
+      border-radius: 15px;
+      backdrop-filter: blur(5px);
+    }
+
+    .header h1 {
+      font-size: 3em;
+      margin: 0;
+      background: linear-gradient(45deg, #4fd1c5, #63b3ed);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+  </style>
+
+  <!-- Resources -->
+  <script src="https://cdn.amcharts.com/lib/4/core.js"></script>
+  <script src="https://cdn.amcharts.com/lib/4/charts.js"></script>
+  <script src="https://cdn.amcharts.com/lib/4/themes/animated.js"></script>
+  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+
+  <!-- Resources -->
+  <script src="https://cdn.amcharts.com/lib/4/core.js"></script>
+  <script src="https://cdn.amcharts.com/lib/4/charts.js"></script>
+  <script src="https://cdn.amcharts.com/lib/4/themes/animated.js"></script>
+  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+
+  <!-- Chart code -->
+  <script th:inline="javascript">
+    // Mutăm configurația Particles într-o funcție separată
+    function initParticles() {
+      if(document.getElementById('particles-js')) {
+        particlesJS("particles-js", {
+          "particles": {
+            "number": {
+              "value": 80,
+              "density": {
+                "enable": true,
+                "value_area": 800
+              }
+            },
+            "color": {
+              "value": "#4fd1c5"
+            },
+            "shape": {
+              "type": "circle"
+            },
+            "opacity": {
+              "value": 0.5,
+              "random": false,
+              "anim": {
+                "enable": false
+              }
+            },
+            "size": {
+              "value": 3,
+              "random": true
+            },
+            "line_linked": {
+              "enable": true,
+              "distance": 150,
+              "color": "#4fd1c5",
+              "opacity": 0.4,
+              "width": 1
+            },
+            "move": {
+              "enable": true,
+              "speed": 2,
+              "direction": "none",
+              "random": false,
+              "straight": false,
+              "out_mode": "out",
+              "bounce": false,
+            }
+          },
+          "interactivity": {
+            "detect_on": "canvas",
+            "events": {
+              "onhover": {
+                "enable": true,
+                "mode": "repulse"
+              },
+              "onclick": {
+                "enable": true,
+                "mode": "push"
+              },
+              "resize": true
+            },
+            "modes": {
+              "repulse": {
+                "distance": 100,
+                "duration": 0.4
+              },
+              "push": {
+                "particles_nb": 4
+              }
+            }
+          },
+          "retina_detect": true
+        });
+      }
+    }
+
+    // Așteptăm ca DOM-ul să fie complet încărcat
+    window.addEventListener('load', function() {
+      initParticles();
+    });
+
+    am4core.ready(function() {
+      // Themes begin
+      am4core.useTheme(am4themes_animated);
+      // Themes end
+
+      // Get data from Thymeleaf
+      var dataLines = /*[[${dataLines}]]*/ [];
+
+      // anii din primul rand
+      var years = dataLines[0].split(';');
+
+      var columnData = [];
+      var maxColumns = years.length;
+
+      // datele 2 rand
+      for(var i = 1; i < dataLines.length; i++) {
+        var values = dataLines[i].split(';');
+        if(values.length > 0 && values[0].trim() !== '') {
+          var dataPoint = {
+            "category": values[0].trim()
+          };
+
+          // Procesăm toate valorile începând cu prima coloană de date
+          for(var j = 1; j < values.length; j++) {
+            if (years[j-1]) {  // folosim j-1 pentru a alinia corect cu anii
+              var yearKey = years[j-1].trim();
+              var value = values[j] ? parseInt(values[j].trim()) || 0 : 0;
+              dataPoint[yearKey] = value;
+            }
+          }
+
+          columnData.push(dataPoint);
+        }
+      }
+
+      console.log("Years:", years);
+      console.log("Processed data:", columnData);
+
+      // Create column chart
+      var columnChart = am4core.create("columnChartDiv", am4charts.XYChart3D);
+      columnChart.data = columnData;
+
+      // Create axes
+      var categoryAxis = columnChart.xAxes.push(new am4charts.CategoryAxis());
+      categoryAxis.dataFields.category = "category";
+      categoryAxis.renderer.grid.template.location = 0;
+      categoryAxis.renderer.minGridDistance = 30;
+      categoryAxis.renderer.labels.template.rotation = 45;
+      categoryAxis.renderer.labels.template.horizontalCenter = "right";
+      categoryAxis.renderer.labels.template.verticalCenter = "middle";
+
+      var valueAxis = columnChart.yAxes.push(new am4charts.ValueAxis());
+      valueAxis.title.text = "Valori";
+      valueAxis.renderer.labels.template.fill = am4core.color("#ffffff");
+      valueAxis.title.fill = am4core.color("#ffffff");
+
+      // Create series pentru fiecare an
+      for(var i = 0; i < years.length; i++) {
+        if (years[i] && years[i].trim() !== '') {
+          var series = columnChart.series.push(new am4charts.ColumnSeries3D());
+          series.dataFields.valueY = years[i].trim();
+          series.dataFields.categoryX = "category";
+          series.name = years[i].trim();
+          series.clustered = false;
+          series.columns.template.tooltipText = "{name} pentru {categoryX}: [bold]{valueY}[/]";
+          series.columns.template.fillOpacity = 0.9;
+        }
+      }
+      columnChart.legend = new am4charts.Legend();
+      columnChart.legend.labels.template.fill = am4core.color("#ffffff");
+      columnChart.depth = 100;
+      columnChart.angle = 30;
+
+      // Create pie chart
+      var pieChart = am4core.create("pieChartDiv", am4charts.PieChart3D);
+      pieChart.hiddenState.properties.opacity = 0;
+
+      // Process data for pie chart (sum of all values for each category)
+      var pieData = columnData.map(function(item) {
+        var sum = 0;
+        years.slice(1).forEach(function(year) {
+          sum += item[year] || 0;
+        });
+        return {
+          category: item.category,
+          value: sum
+        };
+      });
+
+      pieChart.data = pieData;
+      pieChart.legend = new am4charts.Legend();
+      pieChart.legend.labels.template.fill = am4core.color("#ffffff");
+
+      var pieSeries = pieChart.series.push(new am4charts.PieSeries3D());
+      pieSeries.dataFields.value = "value";
+      pieSeries.dataFields.category = "category";
+
+      // Configure pie series
+      pieSeries.slices.template.strokeWidth = 2;
+      pieSeries.slices.template.strokeOpacity = 1;
+      pieSeries.labels.template.fill = am4core.color("#ffffff");
+      pieSeries.slices.template.tooltipText = "{category}: {value.percent.formatNumber('#.#')}% ({value})";
+
+      // Configure pie chart
+      pieChart.angle = 30;
+      pieChart.depth = 100;
+
+      // Make labels smaller and add text break
+      pieSeries.labels.template.maxWidth = 130;
+      pieSeries.labels.template.wrap = true;
+
+      // Aplicăm tema luminoasă pentru text
+      function applyLightTheme(chart) {
+        if (chart.xAxes) {
+          chart.xAxes.each(function(axis) {
+            axis.renderer.labels.template.fill = am4core.color("#ffffff");
+            if (axis.title) {
+              axis.title.fill = am4core.color("#ffffff");
+            }
+          });
+        }
+
+        if (chart.yAxes) {
+          chart.yAxes.each(function(axis) {
+            axis.renderer.labels.template.fill = am4core.color("#ffffff");
+            if (axis.title) {
+              axis.title.fill = am4core.color("#ffffff");
+            }
+          });
+        }
+
+        if (chart.legend) {
+          chart.legend.labels.template.fill = am4core.color("#ffffff");
+          chart.legend.valueLabels.template.fill = am4core.color("#ffffff");
+        }
+      }
+
+      applyLightTheme(columnChart);
+      applyLightTheme(pieChart);
+    });
+  </script>
+</head>
+<body>
+<h2>3D Clustered Columns Chart</h2>
+<div id="columnChartDiv" class="chartdiv"></div>
+
+<h2>3D Pie Chart</h2>
+<div id="pieChartDiv" class="chartdiv"></div>
+</body>
+</html>
